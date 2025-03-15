@@ -2,7 +2,7 @@ import React from 'react';
 import { useAppSelector } from '../../store/hooks';
 import { formatPrice, formatPercentage, getChangeColorClass } from '../../utils/formatters';
 import { Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, TooltipItem } from 'chart.js';
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -58,9 +58,9 @@ const PortfolioSummary: React.FC = () => {
       },
       tooltip: {
         callbacks: {
-          label: (context: any) => {
+          label: (context: TooltipItem<'doughnut'>) => {
             const label = context.label || '';
-            const value = context.raw || 0;
+            const value = typeof context.raw === 'number' ? context.raw : 0;
             return `${label}: ${value.toFixed(2)}%`;
           }
         }
@@ -115,4 +115,4 @@ const PortfolioSummary: React.FC = () => {
   );
 };
 
-export default PortfolioSummary; 
+export default PortfolioSummary;

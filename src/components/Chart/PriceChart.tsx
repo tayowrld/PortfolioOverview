@@ -10,7 +10,8 @@ import {
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  TooltipItem
 } from 'chart.js';
 
 // Register Chart.js components
@@ -87,8 +88,9 @@ const PriceChart: React.FC = () => {
       },
       tooltip: {
         callbacks: {
-          label: (context: any) => {
-            return `Price: $${context.raw.toFixed(2)}`;
+          label: (context: TooltipItem<'line'>) => {
+            const value = typeof context.raw === 'number' ? context.raw : 0;
+            return `Price: $${value.toFixed(2)}`;
           }
         }
       }
@@ -108,8 +110,8 @@ const PriceChart: React.FC = () => {
         },
         ticks: {
           color: '#9e9e9e',
-          callback: (value: number) => {
-            return `$${value.toFixed(2)}`;
+          callback: function(tickValue: string | number): string {
+            return `$${Number(tickValue).toFixed(2)}`;
           }
         }
       }
