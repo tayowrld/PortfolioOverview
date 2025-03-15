@@ -1,0 +1,96 @@
+// Layout mixins
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+// Glass morphism effect
+@mixin glass-morphism {
+  background-color: rgba(42, 42, 60, 0.4);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  
+  &:hover {
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+  }
+}
+
+// Card component base
+@mixin card {
+  background-color: rgba(30, 30, 46, 0.6);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  padding: 1.5rem;
+  animation: fadeIn 0.5s ease-out, slideUp 0.5s ease-out;
+}
+
+// Responsive padding based on screen size
+@mixin responsive-padding {
+  padding: 1rem;
+  
+  @media (min-width: 768px) {
+    padding: 1.5rem;
+  }
+  
+  @media (min-width: 1024px) {
+    padding: 2rem;
+  }
+}
+
+// Text truncation
+@mixin text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Responsive font sizes
+@mixin responsive-font($min-size, $max-size, $min-width: 320px, $max-width: 1200px) {
+  font-size: $min-size;
+  
+  @media (min-width: $min-width) {
+    font-size: calc(#{$min-size} + #{strip-unit($max-size - $min-size)} * ((100vw - #{$min-width}) / #{strip-unit($max-width - $min-width)}));
+  }
+  
+  @media (min-width: $max-width) {
+    font-size: $max-size;
+  }
+}
+
+// Button styles
+@mixin button-style($bg-color, $text-color) {
+  background-color: $bg-color;
+  color: $text-color;
+  border: none;
+  border-radius: 12px;
+  padding: 0.8rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  }
+  
+  &:active {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+  }
+} 
