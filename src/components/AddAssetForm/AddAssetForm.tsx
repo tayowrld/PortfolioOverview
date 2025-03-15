@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { addAsset } from '../../store/slices/assetsSlice';
 import priceService from '../../services/priceService';
@@ -8,10 +8,51 @@ const AddAssetForm: React.FC = () => {
   const dispatch = useAppDispatch();
   const { availableAssets } = useAppSelector((state) => state.assets);
   
+  const searchContainerRef = useRef<HTMLDivElement>(null);
   const [selectedAsset, setSelectedAsset] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
   const [quantity, setQuantity] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Фильтр активов на основе поискового запроса и приоритизация результатов
+  const filteredAssets = availableAssets
+    .filter(asset => 
+      asset.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      asset.symbol.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => {
+      // Приоритизация по началу имени
+      const aNameStartsWith = a.name.toLowerCase().startsWith(searchQuery.toLowerCase());
+      const bNameStartsWith = b.name.toLowerCase().startsWith(searchQuery.toLowerCase());
+      
+      if (aNameStartsWith && !bNameStartsWith) return -1;
+      if (!aNameStartsWith && bNameStartsWith) return 1;
+      
+      // Затем приоритизация по началу символа
+      const aSymbolStartsWith = a.symbol.toLowerCase().startsWith(searchQuery.toLowerCase());
+      const bSymbolStartsWith = b.symbol.toLowerCase().startsWith(searchQuery.toLowerCase());
+      
+      if (aSymbolStartsWith && !bSymbolStartsWith) return -1;
+      if (!aSymbolStartsWith && bSymbolStartsWith) return 1;
+      
+      // Если оба начинаются или оба не начинаются, сортировка по алфавиту
+      return a.name.localeCompare(b.name);
+    });
+  
+  // Обработчик выбора актива из выпадающего списка
+  const handleAssetSelect = (symbol: string) => {
+    setSelectedAsset(symbol);
+    
+    // Найти выбранный актив, чтобы отобразить его имя в поле ввода
+    const asset = availableAssets.find(a => a.symbol === symbol);
+    if (asset) {
+      setSearchQuery(asset.name);
+    }
+    
+    setShowDropdown(false);
+  };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +94,7 @@ const AddAssetForm: React.FC = () => {
       
       // Reset form
       setSelectedAsset('');
+      setSearchQuery('');
       setQuantity('');
     } catch (err) {
       setError('При добавлении актива произошла ошибка. Пожалуйста, попробуйте снова через некоторое время.');
@@ -64,9 +106,25 @@ const AddAssetForm: React.FC = () => {
   
   const handleReset = () => {
     setSelectedAsset('');
+    setSearchQuery('');
     setQuantity('');
     setError(null);
   };
+  
+  // Закрываем выпадающий список при клике вне компонента
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
   
   return (
     <div className="add-asset-form">
@@ -76,20 +134,47 @@ const AddAssetForm: React.FC = () => {
       
       <form className="add-asset-form__form" onSubmit={handleSubmit}>
         <div className="add-asset-form__group">
-          <label htmlFor="asset">Актив:</label>
-          <select
-            id="asset"
-            value={selectedAsset}
-            onChange={(e) => setSelectedAsset(e.target.value)}
-            disabled={loading}
+          <label htmlFor="asset-search">Актив:</label>
+          <div 
+            className="add-asset-form__search-container"
+            ref={searchContainerRef}
           >
-            <option value="">Выберите актив</option>
-            {availableAssets.map((asset) => (
-              <option key={asset.symbol} value={asset.symbol}>
-                {asset.name} ({asset.symbol})
-              </option>
-            ))}
-          </select>
+            <input
+              id="asset-search"
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowDropdown(true);
+                if (e.target.value === '') {
+                  setSelectedAsset('');
+                }
+              }}
+              onClick={() => setShowDropdown(true)}
+              placeholder="Поиск актива..."
+              disabled={loading}
+              className="add-asset-form__search-input"
+            />
+            
+            {showDropdown && (
+              <div className="add-asset-form__dropdown">
+                {filteredAssets.length > 0 ? (
+                  filteredAssets.map((asset) => (
+                    <div
+                      key={asset.symbol}
+                      className={`add-asset-form__dropdown-item ${selectedAsset === asset.symbol ? 'active' : ''}`}
+                      onClick={() => handleAssetSelect(asset.symbol)}
+                    >
+                      <span className="add-asset-form__dropdown-name">{asset.name}</span>
+                      <span className="add-asset-form__dropdown-symbol">{asset.symbol}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="add-asset-form__dropdown-empty">Активы не найдены</div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
         
         <div className="add-asset-form__group">
